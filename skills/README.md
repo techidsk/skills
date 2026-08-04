@@ -2,7 +2,7 @@
 
 | Skill | Responsibility |
 | --- | --- |
-| [`capture-change`](capture-change/SKILL.md) | Language-agnostic single-writer local closeout |
+| [`commit`](commit/SKILL.md) | Session-scoped Git commit and optional merge preparation |
 | [`release`](release/SKILL.md) | Repository-native release preparation and confirmed publishing |
 | [`maintain-test-plan`](maintain-test-plan/SKILL.md) | Repository-native cumulative release testing document |
 

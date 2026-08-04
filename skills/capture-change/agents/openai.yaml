@@ -1,4 +1,0 @@
-interface:
-  display_name: "Capture Change"
-  short_description: "跨语言识别发布意图并维护仓库原生发布元数据"
-  default_prompt: "使用 $capture-change 对当前仓库的完整改动做本地收口。"

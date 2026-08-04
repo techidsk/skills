@@ -6,14 +6,15 @@ A public collection of reusable skills for AI agents.
 
 | Skill | Purpose | Typical trigger |
 | --- | --- | --- |
-| [`capture-change`](skills/capture-change/SKILL.md) | Capture release intent in the repository's native format and optionally commit it | “本地收口”“提交这批改动” |
+| [`commit`](skills/commit/SKILL.md) | Commit only the current session, or prepare a branch for merge | “提交一下”“准备合并” |
 | [`release`](skills/release/SKILL.md) | Prepare and publish with the repository's native release mechanism | “准备发布 1.4.1-beta.2”“确认发布” |
 | [`maintain-test-plan`](skills/maintain-test-plan/SKILL.md) | Maintain one cumulative test plan for each repository-native release cycle | Usually called by the release skill |
 
-The release workflow is AI-first: developers trigger local closeout and release
-preparation; the agent derives repository-native release metadata, CHANGELOG
-entries, and test documentation from repository evidence. WIP commits and
-sub-agents are not required to author release metadata.
+The release workflow is AI-first: ordinary commits include only the current
+session. When developers prepare a branch for merge or prepare a release, the
+agent derives repository-native release metadata, CHANGELOG entries, and test
+documentation from repository evidence. WIP commits and sub-agents are not
+required to author release metadata.
 
 ## Repository structure
 
