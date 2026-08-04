@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Changesets Release"
+  short_description: "安全准备、审阅并执行 pnpm Changesets 发版"
+  default_prompt: "使用 $run-changesets-release 准备下一个版本，并在确认前停止外部发布动作。"

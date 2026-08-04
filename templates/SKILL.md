@@ -1,18 +1,28 @@
+---
+name: action-domain
+description: Describe what the skill does and include concrete phrases or contexts that should trigger it.
+---
+
 # Skill name
 
-## Purpose
+State the outcome in one or two sentences.
 
-Describe what this skill helps an agent do and when it should be used.
+## Constraints
 
-## Instructions
+- Record safety boundaries and actions the skill must never infer.
+- Keep repository-specific values discoverable rather than hard-coded.
 
-Give the agent the workflow, constraints, and decision rules it should follow.
+## Workflow
+
+1. Inspect the relevant context.
+2. Produce a preview when the task changes state.
+3. Execute only the authorized actions.
+4. Validate the result.
 
 ## Inputs and outputs
 
-Document expected inputs, produced outputs, and any required tools or files.
+Document required inputs, generated artifacts, and failure conditions.
 
-## Examples
+## Resources
 
-Include a few representative usage examples.
-
+Link only the references, scripts, or assets that this workflow actually uses.

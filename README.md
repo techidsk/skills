@@ -2,22 +2,44 @@
 
 A public collection of reusable skills for AI agents.
 
+## Available skills
+
+| Skill | Purpose | Typical trigger |
+| --- | --- | --- |
+| [`capture-change`](skills/capture-change/SKILL.md) | Capture release intent in the repository's native format and optionally commit it | “本地收口”“提交这批改动” |
+| [`run-changesets-release`](skills/run-changesets-release/SKILL.md) | Prepare and publish a Changesets release with an explicit safety boundary | “准备发布 1.4.1-beta.2”“确认发布” |
+| [`maintain-release-test-plan`](skills/maintain-release-test-plan/SKILL.md) | Maintain one cumulative test plan for every core SemVer cycle | Usually called by the release skill |
+
+The release workflow is AI-first: developers trigger local closeout and release
+preparation; the agent derives repository-native release metadata, CHANGELOG
+entries, and test documentation from repository evidence. WIP commits and
+sub-agents are not required to author release metadata.
+
 ## Repository structure
 
-Each skill lives in its own directory and is described by a `SKILL.md` file:
+Each skill lives in its own directory:
 
 ```text
 skills/
 └── skill-name/
-    └── SKILL.md
+    ├── SKILL.md
+    ├── agents/
+    │   └── openai.yaml
+    ├── references/
+    └── assets/
 ```
 
-Use [`templates/SKILL.md`](templates/SKILL.md) as the starting point for a new skill.
+Only `SKILL.md` is required. Add resources only when they reduce repeated work
+or make a fragile workflow safer.
+
+Use [`templates/SKILL.md`](templates/SKILL.md) as a minimal starting point for a
+new skill.
 
 ## Contributing a skill
 
-1. Create a directory under `skills/`.
-2. Add a `SKILL.md` with clear instructions, scope, and examples.
-3. Keep supporting assets and scripts next to the skill that uses them.
-4. Open a pull request with a concise description and validation notes.
-
+1. Name the skill `[verb]-[domain]` and create that directory under `skills/`.
+2. Add a `SKILL.md` with valid frontmatter, clear triggers, constraints, and an
+   executable workflow.
+3. Keep supporting references, assets, and scripts next to the skill that uses them.
+4. Validate the skill metadata and remove all placeholders.
+5. Open a pull request with a concise description and validation notes.

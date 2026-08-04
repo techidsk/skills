@@ -1,0 +1,4 @@
+interface:
+  display_name: "Maintain Release Test Plan"
+  short_description: "按核心 SemVer 幂等维护累计发版测试与构建历史"
+  default_prompt: "使用 $maintain-release-test-plan 更新当前版本周期的发版测试文档。"
