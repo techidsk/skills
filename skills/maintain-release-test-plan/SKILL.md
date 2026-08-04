@@ -1,6 +1,6 @@
 ---
 name: maintain-release-test-plan
-description: 根据 Changesets release plan 和仓库变更，按去掉 prerelease/build metadata 后的核心 SemVer 幂等创建或更新累计发版测试文档。Use when Release Skill 传入候选版本，或用户说“更新发版走查”“生成版本测试文档”“记录 beta/rc 增量”“冻结正式版测试计划”时。通常由 `$run-changesets-release` 自动调用，不要求开发者手填模板。
+description: 根据 Changesets release plan 和仓库变更，按去掉 prerelease/build metadata 后的核心 SemVer 幂等创建或更新累计发版测试文档。Use when Release Skill 传入候选版本，或用户说“更新发版走查”“生成版本测试文档”“记录 beta/rc 增量”“冻结正式版测试计划”时。通常由 `$release` 自动调用，不要求开发者手填模板。
 ---
 
 # Maintain Release Test Plan

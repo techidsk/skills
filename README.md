@@ -7,7 +7,7 @@ A public collection of reusable skills for AI agents.
 | Skill | Purpose | Typical trigger |
 | --- | --- | --- |
 | [`capture-change`](skills/capture-change/SKILL.md) | Capture release intent in the repository's native format and optionally commit it | “本地收口”“提交这批改动” |
-| [`run-changesets-release`](skills/run-changesets-release/SKILL.md) | Prepare and publish a Changesets release with an explicit safety boundary | “准备发布 1.4.1-beta.2”“确认发布” |
+| [`release`](skills/release/SKILL.md) | Prepare and publish with the repository's native release mechanism | “准备发布 1.4.1-beta.2”“确认发布” |
 | [`maintain-release-test-plan`](skills/maintain-release-test-plan/SKILL.md) | Maintain one cumulative test plan for every core SemVer cycle | Usually called by the release skill |
 
 The release workflow is AI-first: developers trigger local closeout and release

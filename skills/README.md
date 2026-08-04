@@ -3,7 +3,7 @@
 | Skill | Responsibility |
 | --- | --- |
 | [`capture-change`](capture-change/SKILL.md) | Language-agnostic single-writer local closeout |
-| [`run-changesets-release`](run-changesets-release/SKILL.md) | Release plan, version preparation, review, and confirmed publish actions |
+| [`release`](release/SKILL.md) | Repository-native release preparation and confirmed publishing |
 | [`maintain-release-test-plan`](maintain-release-test-plan/SKILL.md) | Idempotent prerelease-cycle testing document |
 
 The first two skills are the primary human entry points. The release skill calls
