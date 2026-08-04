@@ -1,56 +1,44 @@
 ---
 name: commit
-description: "安全提交当前对话 Session 产生的改动，并在用户明确要求准备合并时维护仓库原生发布元数据。Use only when the user explicitly asks to commit current work, 提交一下, 提交这批改动, prepare a commit, 准备合并, or prepare a branch for PR in any language or ecosystem."
+description: "安全提交当前对话 Session 的改动，并为每个需要发布的 commit 创建仓库原生 release metadata。Use only when the user explicitly asks to commit current work, 提交一下, 提交这批改动, prepare a commit, or create a Git commit in any language or ecosystem."
 ---
 
 # Commit
 
-把用户的明确提交请求视为本地 commit 授权，不重复要求确认。默认只提交当前 Session
-的改动；仅在用户明确要求时扩大范围。
+把明确的提交请求视为本地 commit 授权，不重复确认。默认只提交当前 Session；用户
+明确指定时才扩大范围。
 
-## 模式
+## 范围
 
-- **提交**：“提交一下”“提交当前改动”只提交当前 Session，不生成发布元数据。
-- **准备合并**：“准备合并”“整理后提 PR”检查完整分支 Diff，并按仓库原生机制
-  幂等维护 Changeset、changelog fragment 或其他发布元数据；只有用户同时要求提交
-  时才创建 commit。
-- **明确范围**：用户指定路径、整个工作区或其他范围时，以该范围为准。
+以本次对话的工具记录、实际 patch 和直接生成文件识别 Session 改动，而不是把所有
+dirty 文件都算进来。
 
-不要自行判断 WIP。普通提交与准备合并的区别来自用户请求，而不是 commit message、
-文件数量或测试状态。
-
-## 确定 Session 范围
-
-以本次对话的工具记录、实际 patch 和直接生成文件为证据。仅因文件处于 dirty 状态，
-不能认定它属于当前 Session。
-
-- 默认排除用户原有改动、其他 Session、其他 Agent 和无关的 staged 文件；范围外
-  staged 路径可被可靠保留时使用 path-limited commit，并在提交后复核其状态。
+- 排除用户原有改动、其他 Session、其他 Agent 和无关 staged 文件。
 - 同一文件混有多方改动时，只暂存可验证属于当前 Session 的 hunk。
-- 无法可靠拆分、发现疑似凭据或不能保证保留原暂存状态时停止并询问；不回显凭据，
-  不擅自取消用户的暂存。
-- 协调 Agent 独占发布元数据、暂存区和最终提交的写权限。
+- 范围外 staged 路径可被可靠保留时使用 path-limited commit，并在提交后复核。
+- 无法拆分、发现疑似凭据或不能保留原暂存状态时停止询问；不回显凭据或擅自 unstage。
+
+## Release metadata
+
+读取仓库指令、manifest、版本配置和 CI，沿用 Changesets、towncrier、release note
+fragments 或其他既有机制；仓库没有片段机制时不引入新工具。
+
+- 每个需要发布的 commit 都必须把对应片段和代码放进同一个 commit。
+- 按独立用户结果拆分片段；一个 commit 可有多个片段，一个片段可覆盖多个发布单元。
+- 为本次 commit 创建独立片段；重复执行时更新本 Session 尚未提交的片段，不重复创建。
+- 根据仓库策略确定版本影响；使用 SemVer 时为 `major`、`minor` 或 `patch`。
+- 纯测试、文档、CI 或无发布影响的内部改动可为 `none`，但必须在执行摘要中说明原因。
+- 发布文本语言：用户指定 → 仓库指令 → 现有元数据 → 当前对话语言。命令、标识符、
+  package 名和版本号保持原样。
 
 ## 执行
 
-1. 读取仓库指令、commit 规范、hooks、状态和相关 diff。提交信息遵循仓库格式与
-   语言；没有约定时使用 Conventional Commits。
-2. 准备合并时，比较开发基线后的完整分支结果，按独立用户结果归并发布意图；
-   commit、文件、package 和 Agent 数量不是拆分单位。复用或更新等价片段，缺失时
-   才按仓库格式创建；仓库没有片段机制时不引入新工具。
-3. 在执行前简要说明将提交的路径、保留的 dirty 路径、commit message，以及准备
-   合并时的发布元数据动作。范围清楚时直接继续，不等待第二次确认。
-4. 仅按精确路径或可验证 hunk 暂存，复核 staged diff，运行仓库规定的快速相关校验，
-   然后使用确认范围对应的 message 提交。
-5. 不绕过 hooks。失败时保留现场并报告；不使用 `git add .`、`git add -A`、
-   `git add -u` 或宽泛 glob。
-6. 返回 commit hash、实际提交路径、校验结果和仍未提交的相关路径。
+1. 读取 commit 规范、hooks、状态和相关 diff，确定 Session 路径、发布意图和片段内容。
+2. 生成符合仓库语言与格式的 commit message；无约定时使用 Conventional Commits。
+3. 执行前简要列出将提交和保留的路径、release metadata 动作及 commit message；
+   范围清楚时直接继续。
+4. 写入片段，按精确路径或 hunk 暂存，复核 staged diff，运行快速相关校验后提交。
+5. 不绕过 hooks，不使用 broad staging。返回 commit hash、片段、校验结果和剩余改动。
 
-发布元数据的语言按“用户指定 → 仓库指令 → 现有元数据 → 当前对话语言”选择；
-命令、标识符、package 名和版本号保持原样。
-
-## 只在例外时确认
-
-仅在范围或所有权不明确、同文件 hunk 无法拆分、疑似凭据、需要包含 Session 外改动，
-或准备合并会产生 breaking/major 发布意图时请求确认。commit 不执行 push、tag、
-publish、deploy 或外部通知。
+仅在所有权不明、hunk 无法拆分、疑似凭据、扩大到 Session 外，或出现 breaking/major
+发布意图时确认。不要 push、tag、publish、deploy 或发送外部通知。

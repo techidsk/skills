@@ -2,7 +2,7 @@
 
 | Skill | Responsibility |
 | --- | --- |
-| [`commit`](commit/SKILL.md) | Session-scoped Git commit and optional merge preparation |
+| [`commit`](commit/SKILL.md) | Session-scoped commit with release metadata capture |
 | [`release`](release/SKILL.md) | Repository-native release preparation and confirmed publishing |
 | [`maintain-test-plan`](maintain-test-plan/SKILL.md) | Repository-native cumulative release testing document |
 

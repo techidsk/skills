@@ -6,15 +6,14 @@ A public collection of reusable skills for AI agents.
 
 | Skill | Purpose | Typical trigger |
 | --- | --- | --- |
-| [`commit`](skills/commit/SKILL.md) | Commit only the current session, or prepare a branch for merge | “提交一下”“准备合并” |
+| [`commit`](skills/commit/SKILL.md) | Commit the current session with repository-native release metadata | “提交一下” |
 | [`release`](skills/release/SKILL.md) | Prepare and publish with the repository's native release mechanism | “准备发布 1.4.1-beta.2”“确认发布” |
 | [`maintain-test-plan`](skills/maintain-test-plan/SKILL.md) | Maintain one cumulative test plan for each repository-native release cycle | Usually called by the release skill |
 
-The release workflow is AI-first: ordinary commits include only the current
-session. When developers prepare a branch for merge or prepare a release, the
-agent derives repository-native release metadata, CHANGELOG entries, and test
-documentation from repository evidence. WIP commits and sub-agents are not
-required to author release metadata.
+The release workflow is AI-first: each releasable session commit records its
+repository-native release metadata. Release preparation aggregates the pending
+metadata into versions, CHANGELOG entries, and test documentation. Developers
+do not hand-write these artifacts.
 
 ## Repository structure
 
@@ -33,8 +32,8 @@ skills/
 Only `SKILL.md` is required. Add resources only when they reduce repeated work
 or make a fragile workflow safer.
 
-Use [`templates/SKILL.md`](templates/SKILL.md) as a minimal starting point for a
-new skill.
+Use [`templates/skill-template.md`](templates/skill-template.md) as a minimal
+starting point for a new skill.
 
 ## Contributing a skill
 
