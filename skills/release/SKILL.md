@@ -56,7 +56,7 @@ description: "准备或执行仓库版本发布：发现项目原生版本与发
    空计划时区分“没有待发布内容”和“已经 prepare”。
 3. 把用户给出的版本当作预期结果，与计算结果严格比较。版本工具不能直接接受
    精确版本时，遵循其状态机，不手改内部状态凑版本。
-4. 调用 `$maintain-release-test-plan`，传入 release plan、版本周期、当前增量、
+4. 调用 `$maintain-test-plan`，传入 release plan、版本周期、当前增量、
    Git ref、测试证据和 `phase=prepare`。失败时保留发布片段并停止。
 5. 运行仓库原生的 version/CHANGELOG 生成步骤，不执行包装脚本中的外部动作。
 6. 检查版本、依赖、CHANGELOG、已消费片段、测试文档和全部计划外文件。
@@ -92,8 +92,8 @@ Push: <remote + refs + triggered workflows | 不适用>
 确认后按预览顺序逐项执行和记录。每步完成后再进入下一步；失败时停止，列出
 已完成、未完成和可安全恢复的动作。有重复发布风险的步骤等待新授权后再重试。
 
-正式版完成后调用 `$maintain-release-test-plan`，传入 `phase=released`；
-候选版本只追加构建结果，不冻结版本周期文档。
+正式版完成后调用 `$maintain-test-plan`，传入 `phase=released` 及刚执行成功的
+publish/deploy 结果作为证据；候选版本只追加构建结果，不冻结版本周期文档。
 
 **完成条件：** 实际动作与确认清单逐项对应，并汇报 commit、tags、published
 artifacts、pushed refs、deployments、notifications 和任何 partial failure。
