@@ -18,6 +18,9 @@
 | `REL-004` | 对相同目标版本重复执行 `prepare`，第一次产物尚未提交。 | 识别已有产物并只重新验证；测试 ID、构建记录和文档条目不重复。 | 不重复消费片段或叠加相同 diff。 |
 | `REL-005` | 已展示精确 publish 动作清单后用户说“确认发布”；确认前目标版本或 remote 发生变化。 | 未变化时执行清单；发生变化时重新展示清单并重新确认。 | 不把模糊的“确认”扩展成未展示的外部动作。 |
 | `REL-006` | 已确认的发布动作按顺序执行，其中一步失败。 | 立即停止，报告已完成/未完成步骤及安全恢复方式。 | 不自动重试可能重复发布的步骤。 |
+| `REL-007` | 仓库已有发布配置、metadata、脚本或 CI 引用，但模型要求的本地工具缺失或不可执行。 | 归类为 `configured-but-unavailable`，报告生态、模型、缺失组件、修复类别及已有独立命令/文档入口。 | 不降级为手工计划，不安装工具或继续 version/publish。 |
+| `REL-008` | 纯 Python 仓库的 `pyproject.toml`、包装脚本和 CI 已定义完整发布机制，不使用 Node package manager 或 JavaScript lockfile。 | 按 Python 模型要求归类为 `ready`；把不适用的 Node 组件记录为 `none`。 | 不要求 pnpm、package.json、node_modules 或 Changesets。 |
+| `REL-009` | 没有发布机制，用户让 `$release` 自行选择并安装一个工具。 | 说明安装初始化属于独立任务；只展示仓库已有 setup 命令或文档，没有则报告 `none`。 | 不选择 Changesets、Hatch 等工具，不生成临时下载命令，不修改仓库。 |
 | `TP-001` | 调用测试计划时缺少候选版本、周期或可验证 release plan。 | 停止并报告缺失输入。 | 不从 `beta.2` 等后缀猜测周期或上一候选。 |
 | `TP-002` | 同一周期先有候选 `1.4.1-beta.1`，再有 `1.4.1-beta.2` 和新增 Changeset。 | 保留累计范围；本轮增量只记录相对上一候选新增或改变的意图。 | 不删除上一候选范围，不把全部历史重复写成新增。 |
 | `TP-003` | 相同 release plan、测试 ID 和候选构建重复提交；旧文档含人工 checkbox、备注和负责人。 | 使用稳定 ID 去重，构建历史 upsert，并保留人工段落和 checkbox。 | 不重复测试项，不覆盖人工维护内容。 |
@@ -26,6 +29,8 @@
 | `CHG-001` | Changesets 仓库含 config、manifest、包装脚本和 CI。 | 发现并核对 `commit`、`fixed`、`linked`、`ignore`、private package、CHANGELOG 和自动化归属。 | 不假设固定 package manager 或跳过包装脚本。 |
 | `CHG-002` | Changesets prerelease 从普通状态进入候选，再退出候选。 | 按仓库锁定 CLI 的 prerelease 状态机执行 `pre enter`/`pre exit`，随后运行 `version`。 | 不直接编辑 `pre.json` 或手改版本绕过状态机。 |
 | `CHG-003` | Changesets publish、Git tag、GitHub Release 和 CI Action 同时存在。 | 区分 registry publish、tag、push、GitHub Release 与 automation-owned 动作，避免重复执行。 | 不重复创建 tag、发布 package 或触发已有自动化。 |
+| `CHG-004` | Changesets 配置、manifest 和 lockfile 一致，但 `node_modules` 缺失。 | 归类为 `configured-but-unavailable`，修复类别为 `install-locked-dependencies`，展示已有安装入口。 | `$release` 不执行安装，不重新 add 或升级依赖。 |
+| `CHG-005` | Changesets 配置和脚本存在，但只能从终端 PATH 找到全局 CLI。 | 忽略全局 CLI，报告本地锁定依赖与执行入口缺失。 | 不使用全局 `changeset`、`npx`、`pnpm dlx` 或手工计划。 |
 | `LANG-001` | 用户使用中文提出发布请求，仓库文档也允许中文。 | release metadata、CHANGELOG、测试计划和说明文字使用中文；命令、ID、package 名和版本号保持原样。 | 不因为命令或技术标识是英文而把整份业务文档输出成英文。 |
 | `INST-001` | 用户在普通终端运行 `npx skills@latest add techidsk/skills`。 | TUI 允许选择 Skill 和目标 Agent，安装副本并记录来源；更新由用户运行 `npx skills update`。 | 不把复制安装描述为后台自动更新。 |
 | `INST-002` | 维护者对 `engineering` 分类运行链接脚本。 | `--dry-run` 不写文件；正式执行前先全量预检，再为每个 Skill 创建指向正式源的 symlink，重复执行保持幂等。 | 不在仓库内创建安装镜像，不复制出第二份正式源，也不在冲突时部分写入。 |

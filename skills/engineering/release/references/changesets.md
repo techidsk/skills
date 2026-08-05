@@ -1,7 +1,30 @@
 # Changesets 适配器
 
 仅在仓库使用 Changesets 时读取。以仓库锁定的 CLI 版本、配置和 CI 为准，不固定
-package manager。
+package manager。这是 Changesets 专用的 Node 工具链要求；没有 Changesets 证据的
+Python、Rust、Ruby、JVM 或其他仓库不得套用本文件的 manifest、lockfile 和 CLI 条件。
+
+## 就绪检查
+
+- 从 Node workspace root、`packageManager`、manifest 和 lockfile 确定 repo runner；
+  npm、pnpm、Yarn、Bun 或其他入口以仓库证据为准，冲突时停止并报告。
+- 把 `.changeset/`、`@changesets/cli` 声明、包装脚本或 CI 引用中的任一项视为已配置
+  证据，不能因另一个组件缺失而将仓库归类为 `absent`。
+- 检查 `.changeset/config.json` 存在且可解析。
+- 检查 `@changesets/cli` 同时存在于 workspace manifest 和对应 lockfile importer，且
+  声明与锁定版本一致。
+- 检查仓库脚本或本地 CLI 可执行，读取并记录实际版本。包装脚本缺失不单独构成阻塞，
+  前提是 repo runner 能安全执行已锁定的本地 CLI。
+- 优先使用仓库包装脚本，其次使用 package manager 执行本地依赖。只解析仓库本地
+  binary；禁止使用全局 `changeset`，也禁止使用 `npx`、`pnpm dlx` 或其他会临时下载
+  未锁定版本的方式。无法排除自动下载时视为不可用。
+- 依赖已在 manifest 和 lockfile 中锁定但 `node_modules` 缺失时，归类为
+  `configured-but-unavailable`，修复类别记为 `install-locked-dependencies`。报告仓库
+  已有的独立安装命令或文档；本 Skill 不执行安装，也不重新添加或升级依赖。
+- 配置存在但依赖未声明、manifest 与 lockfile 不一致或本地 CLI 仍不可执行时停止，
+  分别报告 `repair-configuration` 或 `initialize-release-tooling`；不得降级为手工发布
+  计划。
+- 只能从全局找到 CLI 时归类为 `configured-but-unavailable`。
 
 ## 发现
 

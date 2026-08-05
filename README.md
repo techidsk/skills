@@ -85,7 +85,7 @@ Skill：
 | Skill | 作用 | 常用触发语句 |
 | --- | --- | --- |
 | [`commit`](skills/engineering/commit/SKILL.md) | 提交当前 Session，并生成发布片段 | “提交一下” |
-| [`release`](skills/engineering/release/SKILL.md) | 汇总片段，准备或执行发布 | “准备发布 1.4.1” |
+| [`release`](skills/engineering/release/SKILL.md) | 检查工具链并准备或执行发布 | “准备发布 1.4.1” |
 | [`maintain-test-plan`](skills/engineering/maintain-test-plan/SKILL.md) | 累计维护版本测试计划 | 通常由 `release` 自动调用 |
 
 ## 工作流
@@ -147,13 +147,23 @@ registry、tag、remote、environment 或自动化责任发生变化，会展示
 
 ## 跨语言与发布机制
 
-Skills 不要求项目使用 Node 或 pnpm，也不会主动引入发布工具。它们会沿用仓库已有
-机制，例如：
+Skills 不要求项目使用 Node 或 pnpm，也不会主动引入发布工具。`$release` 只检查当前
+发布模型实际要求的配置、metadata、版本固定方式和仓库认可入口；不适用的 package
+manager、lockfile 或 CLI 会记录为 `none`，不会被误判成缺失。它会沿用仓库已有机制，
+例如：
 
 - Node.js：Changesets 或自定义 changelog fragments。
 - Python：towncrier、版本文件或仓库脚本。
 - Swift：release note fragments、`MARKETING_VERSION` 与构建号。
 - 其他项目：CalVer、自定义 release train 或部署版本。
+
+就绪检查把仓库分为 `ready`、`configured-but-unavailable` 和 `absent`。已检测到配置或
+CI 引用但 CLI 不可用时会阻塞，不会降级成手工发布；完全没有发布机制时只生成只读
+计划。
+
+安装和初始化不属于 `$release`。仓库可以另行提供 doctor/setup/bootstrap 命令或文档；
+Skill 只展示已存在的精确入口并停止，不执行它，也不会为缺少入口的仓库自动选择
+Changesets、Hatch 或其他机制。修复完成后重新运行 `$release` 的发现与就绪检查。
 
 仓库使用 Changesets 时，每个可发布 commit 可以贡献一个或多个 `.changeset/*.md`。
 最终 `changeset version` 会汇总所有片段，更新版本、内部依赖和 CHANGELOG，并删除

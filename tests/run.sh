@@ -124,6 +124,7 @@ RELEASE_DIR="$ENGINEERING_DIR/release"
 TEST_PLAN_DIR="$ENGINEERING_DIR/maintain-test-plan"
 COMMIT_SKILL="$COMMIT_DIR/SKILL.md"
 RELEASE_SKILL="$RELEASE_DIR/SKILL.md"
+RELEASE_EVALS="$RELEASE_DIR/evals/evals.json"
 TEST_PLAN_SKILL="$TEST_PLAN_DIR/SKILL.md"
 CHANGESETS_REF="$RELEASE_DIR/references/changesets.md"
 
@@ -133,6 +134,7 @@ for required_file in \
   "$PROJECT_DIR/templates/skill-template.md" \
   "$COMMIT_SKILL" \
   "$RELEASE_SKILL" \
+  "$RELEASE_EVALS" \
   "$TEST_PLAN_SKILL" \
   "$CHANGESETS_REF" \
   "$COMMIT_DIR/agents/openai.yaml" \
@@ -194,6 +196,11 @@ assert_text "$COMMIT_SKILL" "breaking/major" "commit gates breaking or major cha
 assert_text "$RELEASE_SKILL" '默认执行本地 `prepare`' "release defaults to prepare"
 assert_text "$RELEASE_SKILL" '外部 `publish`' "release separates publish"
 assert_text "$RELEASE_SKILL" "使用仓库原生工具" "release uses repository-native tooling"
+assert_text "$RELEASE_SKILL" "configured-but-unavailable" "release blocks partially configured tooling"
+assert_text "$RELEASE_SKILL" 'package manager、lockfile 或 CLI 记为 `none`' "release treats ecosystem-specific components as optional"
+assert_text "$RELEASE_SKILL" "安装与初始化交接" "release separates tooling setup"
+assert_text "$RELEASE_SKILL" "本 Skill 不安装、升级、初始化或配置发布工具" "release never bootstraps tooling"
+assert_text "$RELEASE_SKILL" "doctor/setup/bootstrap 命令或文档" "release reports independent remediation entrypoints"
 assert_text "$RELEASE_SKILL" "在消费任何片段前" "release plans before consuming metadata"
 assert_text "$RELEASE_SKILL" '`$maintain-test-plan`' "release delegates test-plan maintenance"
 assert_text "$RELEASE_SKILL" "版本与 CHANGELOG 产物" "release verifies version and changelog"
@@ -219,6 +226,9 @@ assert_text "$TEST_PLAN_SKILL" "候选版不冻结" "candidate remains unfrozen"
 assert_text "$TEST_PLAN_SKILL" "带日期、原因和证据的明确勘误" "frozen plan only accepts evidenced errata"
 
 assert_text "$CHANGESETS_REF" '读取 `.changeset/config.json`' "changesets discovers config"
+assert_text "$CHANGESETS_REF" "Changesets 专用的 Node 工具链要求" "changesets adapter stays ecosystem-scoped"
+assert_text "$CHANGESETS_REF" "install-locked-dependencies" "changesets reports locked dependency installation handoff"
+assert_text "$CHANGESETS_REF" '禁止使用全局 `changeset`' "changesets rejects global CLI"
 assert_text "$CHANGESETS_REF" '`commit`、`fixed`、`linked`、`ignore`' "changesets checks release topology"
 assert_text "$CHANGESETS_REF" "changeset status --output" "changesets exports plan"
 assert_text "$CHANGESETS_REF" "changeset version" "changesets runs version step"
@@ -230,9 +240,9 @@ assert_text "$CHANGESETS_REF" "automation-owned" "changesets marks automation-ow
 
 for case_id in \
   CMT-001 CMT-002 CMT-003 CMT-004 \
-  REL-001 REL-002 REL-003 REL-004 REL-005 REL-006 \
+  REL-001 REL-002 REL-003 REL-004 REL-005 REL-006 REL-007 REL-008 REL-009 \
   TP-001 TP-002 TP-003 TP-004 TP-005 \
-  CHG-001 CHG-002 CHG-003 LANG-001 \
+  CHG-001 CHG-002 CHG-003 CHG-004 CHG-005 LANG-001 \
   INST-001 INST-002 INST-003 INST-004; do
   assert_text "$CASE_FILE" "\`$case_id\`" "test case documented: $case_id"
 done
