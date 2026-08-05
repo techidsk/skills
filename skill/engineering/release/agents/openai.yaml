@@ -1,4 +1,0 @@
-interface:
-  display_name: "Release"
-  short_description: "跨语言发现仓库发布机制并安全准备、审阅和执行版本发布"
-  default_prompt: "使用 $release 汇总待发布片段并准备当前仓库的下一个版本。"

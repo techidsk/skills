@@ -7,20 +7,42 @@
 
 ## 安装
 
-需要 GitHub CLI `2.90.0` 或更高版本。
+### 交互式安装（推荐）
 
-交互式选择并安装：
+在普通终端中，使用 `skills` TUI 选择要安装的 Skill；检测到多个 Agent 时还可选择
+目标 Agent：
 
 ```bash
-gh skill install techidsk/skills
+npx skills@latest add techidsk/skills
 ```
 
-安装指定 Skill 到 Codex 用户目录：
+如果由 Codex 或其他 AI Agent 代为运行，`skills` CLI 会自动切换到非交互模式。此时可
+先列出 Skill，再显式指定要安装的项目：
 
 ```bash
-gh skill install techidsk/skills commit --agent codex --scope user
-gh skill install techidsk/skills release --agent codex --scope user
-gh skill install techidsk/skills maintain-test-plan --agent codex --scope user
+npx skills@latest add techidsk/skills --list
+npx skills@latest add techidsk/skills --skill commit
+```
+
+安装器会复制 Skill，并用 `skills-lock.json` 记录来源；副本不会在后台静默变化。
+需要拉取新版时运行：
+
+```bash
+npx skills update
+```
+
+### GitHub CLI
+
+需要 GitHub CLI `2.90.0` 或更高版本。交互式选择并安装到 Codex 用户目录：
+
+```bash
+gh skill install techidsk/skills --agent codex --scope user
+```
+
+安装全部 Skill：
+
+```bash
+gh skill install techidsk/skills --all --agent codex --scope user
 ```
 
 固定到指定版本：
@@ -38,13 +60,33 @@ gh skill install techidsk/skills commit \
 gh skill preview techidsk/skills commit
 ```
 
+### 维护者开发链接
+
+仓库维护者可以把正式源目录链接到本机 Agent Skill 目录。先预览，再执行：
+
+```bash
+./scripts/link-skills.sh --target codex --category engineering --dry-run
+./scripts/link-skills.sh --target codex --category engineering
+```
+
+`--target agents` 使用通用的 `~/.agents/skills`，`--target all` 同时链接通用目录和
+Codex 目录。已有普通文件或目录时脚本会停止；显式使用 `--force` 时，会先移动到目标
+目录内的 `.skill-backups/`，再创建链接。
+
+链接模式下，Skill 始终指向当前仓库；后续 `git pull` 即可获得更新。查看仓库中可用
+Skill：
+
+```bash
+./scripts/list-skills.sh
+```
+
 ## Skills
 
 | Skill | 作用 | 常用触发语句 |
 | --- | --- | --- |
-| [`commit`](skills/commit/SKILL.md) | 提交当前 Session，并生成发布片段 | “提交一下” |
-| [`release`](skills/release/SKILL.md) | 汇总片段，准备或执行发布 | “准备发布 1.4.1” |
-| [`maintain-test-plan`](skills/maintain-test-plan/SKILL.md) | 累计维护版本测试计划 | 通常由 `release` 自动调用 |
+| [`commit`](skills/engineering/commit/SKILL.md) | 提交当前 Session，并生成发布片段 | “提交一下” |
+| [`release`](skills/engineering/release/SKILL.md) | 汇总片段，准备或执行发布 | “准备发布 1.4.1” |
+| [`maintain-test-plan`](skills/engineering/maintain-test-plan/SKILL.md) | 累计维护版本测试计划 | 通常由 `release` 自动调用 |
 
 ## 工作流
 
@@ -139,18 +181,30 @@ Skills 不要求项目使用 Node 或 pnpm，也不会主动引入发布工具�
 
 ```text
 skills/
-├── commit/
-├── release/
-└── maintain-test-plan/
+└── engineering/
+    ├── commit/
+    ├── release/
+    └── maintain-test-plan/
+
+scripts/
+├── link-skills.sh
+└── list-skills.sh
 ```
 
-每个 Skill 只要求一个 `SKILL.md`。`agents/openai.yaml` 提供 UI 元数据，
-`references/` 只保存按条件读取的实现细节。
+`skills/` 是唯一正式源，第二级目录按功能类别划分。每个 Skill 只要求一个
+`SKILL.md`；`agents/openai.yaml` 提供 UI 元数据，`references/` 只保存按条件读取的
+实现细节。安装目录和 Agent 用户目录只保存副本或链接，不作为源文件维护。
 
 创建新 Skill 时可从
 [`templates/skill-template.md`](templates/skill-template.md) 开始。
 
 ## 维护与校验
+
+运行仓库回归测试：
+
+```bash
+bash tests/run.sh
+```
 
 校验 Markdown：
 

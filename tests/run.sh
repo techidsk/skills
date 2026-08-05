@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
-set -eu
+set -euo pipefail
 
 TESTS_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_DIR="$(CDPATH= cd -- "$TESTS_DIR/.." && pwd)"
 CASE_FILE="$TESTS_DIR/test-cases.md"
+LIST_SCRIPT="$PROJECT_DIR/scripts/list-skills.sh"
+LINK_SCRIPT="$PROJECT_DIR/scripts/link-skills.sh"
+TEST_TEMP_DIR="$(mktemp -d /tmp/agent-skills-tests.XXXXXX)"
+
+cleanup() {
+  case "$TEST_TEMP_DIR" in
+    /tmp/agent-skills-tests.*) rm -rf -- "$TEST_TEMP_DIR" ;;
+  esac
+}
+
+trap cleanup EXIT
 
 PASS_COUNT=0
 FAIL_COUNT=0
@@ -24,6 +35,55 @@ assert_file() {
     pass "file exists: ${path#"$PROJECT_DIR/"}"
   else
     fail "file missing: ${path#"$PROJECT_DIR/"}"
+  fi
+}
+
+assert_dir() {
+  local path="$1"
+  if [ -d "$path" ]; then
+    pass "directory exists: ${path#"$PROJECT_DIR/"}"
+  else
+    fail "directory missing: ${path#"$PROJECT_DIR/"}"
+  fi
+}
+
+assert_absent() {
+  local path="$1"
+  local label="$2"
+  if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+    pass "$label"
+  else
+    fail "$label"
+  fi
+}
+
+assert_executable() {
+  local path="$1"
+  if [ -x "$path" ]; then
+    pass "file is executable: ${path#"$PROJECT_DIR/"}"
+  else
+    fail "file is not executable: ${path#"$PROJECT_DIR/"}"
+  fi
+}
+
+assert_value_contains() {
+  local value="$1"
+  local needle="$2"
+  local label="$3"
+  case "$value" in
+    *"$needle"*) pass "$label" ;;
+    *) fail "$label" ;;
+  esac
+}
+
+assert_symlink_to() {
+  local path="$1"
+  local expected="$2"
+  local label="$3"
+  if [ -L "$path" ] && [ "$(readlink "$path")" = "$expected" ]; then
+    pass "$label"
+  else
+    fail "$label"
   fi
 }
 
@@ -58,10 +118,14 @@ assert_order() {
 
 printf 'Running Agent Skills contract tests in %s\n' "$PROJECT_DIR"
 
-COMMIT_SKILL="$PROJECT_DIR/skills/commit/SKILL.md"
-RELEASE_SKILL="$PROJECT_DIR/skills/release/SKILL.md"
-TEST_PLAN_SKILL="$PROJECT_DIR/skills/maintain-test-plan/SKILL.md"
-CHANGESETS_REF="$PROJECT_DIR/skills/release/references/changesets.md"
+ENGINEERING_DIR="$PROJECT_DIR/skills/engineering"
+COMMIT_DIR="$ENGINEERING_DIR/commit"
+RELEASE_DIR="$ENGINEERING_DIR/release"
+TEST_PLAN_DIR="$ENGINEERING_DIR/maintain-test-plan"
+COMMIT_SKILL="$COMMIT_DIR/SKILL.md"
+RELEASE_SKILL="$RELEASE_DIR/SKILL.md"
+TEST_PLAN_SKILL="$TEST_PLAN_DIR/SKILL.md"
+CHANGESETS_REF="$RELEASE_DIR/references/changesets.md"
 
 for required_file in \
   "$PROJECT_DIR/README.md" \
@@ -71,12 +135,19 @@ for required_file in \
   "$RELEASE_SKILL" \
   "$TEST_PLAN_SKILL" \
   "$CHANGESETS_REF" \
-  "$PROJECT_DIR/skills/commit/agents/openai.yaml" \
-  "$PROJECT_DIR/skills/release/agents/openai.yaml" \
-  "$PROJECT_DIR/skills/maintain-test-plan/agents/openai.yaml" \
+  "$COMMIT_DIR/agents/openai.yaml" \
+  "$RELEASE_DIR/agents/openai.yaml" \
+  "$TEST_PLAN_DIR/agents/openai.yaml" \
+  "$LIST_SCRIPT" \
+  "$LINK_SCRIPT" \
   "$CASE_FILE"; do
   assert_file "$required_file"
 done
+
+assert_dir "$ENGINEERING_DIR"
+assert_absent "$PROJECT_DIR/skill" "legacy copied skill directory is absent"
+assert_executable "$LIST_SCRIPT"
+assert_executable "$LINK_SCRIPT"
 
 assert_text "$COMMIT_SKILL" "name: commit" "commit frontmatter name"
 assert_text "$COMMIT_SKILL" "description:" "commit frontmatter description"
@@ -86,19 +157,24 @@ assert_text "$TEST_PLAN_SKILL" "name: maintain-test-plan" "test-plan frontmatter
 assert_text "$TEST_PLAN_SKILL" "description:" "test-plan frontmatter description"
 
 for agent_file in \
-  "$PROJECT_DIR/skills/commit/agents/openai.yaml" \
-  "$PROJECT_DIR/skills/release/agents/openai.yaml" \
-  "$PROJECT_DIR/skills/maintain-test-plan/agents/openai.yaml"; do
+  "$COMMIT_DIR/agents/openai.yaml" \
+  "$RELEASE_DIR/agents/openai.yaml" \
+  "$TEST_PLAN_DIR/agents/openai.yaml"; do
   assert_text "$agent_file" "interface:" "agent metadata interface: ${agent_file#"$PROJECT_DIR/"}"
   assert_text "$agent_file" "display_name:" "agent metadata display name: ${agent_file#"$PROJECT_DIR/"}"
   assert_text "$agent_file" "short_description:" "agent metadata short description: ${agent_file#"$PROJECT_DIR/"}"
   assert_text "$agent_file" "default_prompt:" "agent metadata default prompt: ${agent_file#"$PROJECT_DIR/"}"
 done
 
-assert_text "$PROJECT_DIR/README.md" "skills/commit/SKILL.md" "root README links commit"
-assert_text "$PROJECT_DIR/README.md" "skills/release/SKILL.md" "root README links release"
-assert_text "$PROJECT_DIR/README.md" "skills/maintain-test-plan/SKILL.md" "root README links test-plan"
+assert_text "$PROJECT_DIR/README.md" "skills/engineering/commit/SKILL.md" "root README links commit"
+assert_text "$PROJECT_DIR/README.md" "skills/engineering/release/SKILL.md" "root README links release"
+assert_text "$PROJECT_DIR/README.md" "skills/engineering/maintain-test-plan/SKILL.md" "root README links test-plan"
 assert_text "$PROJECT_DIR/README.md" "gh skill install techidsk/skills" "root README documents install"
+assert_text "$PROJECT_DIR/README.md" "npx skills@latest add techidsk/skills" "root README documents TUI install"
+assert_text "$PROJECT_DIR/README.md" "npx skills update" "root README documents manual update"
+assert_text "$PROJECT_DIR/README.md" "自动切换到非交互模式" "root README documents agent-mode install"
+assert_text "$PROJECT_DIR/README.md" "--skill commit" "root README documents selective install"
+assert_text "$PROJECT_DIR/README.md" "./scripts/link-skills.sh" "root README documents maintainer links"
 assert_text "$PROJECT_DIR/README.md" "不会 commit、tag、push、publish、deploy 或发送通知" "README prepare safety boundary"
 assert_text "$PROJECT_DIR/README.md" "不使用宽泛暂存" "README commit safety boundary"
 assert_text "$PROJECT_DIR/README.md" "没有证据时，不把测试标记为通过" "README evidence boundary"
@@ -156,7 +232,8 @@ for case_id in \
   CMT-001 CMT-002 CMT-003 CMT-004 \
   REL-001 REL-002 REL-003 REL-004 REL-005 REL-006 \
   TP-001 TP-002 TP-003 TP-004 TP-005 \
-  CHG-001 CHG-002 CHG-003 LANG-001; do
+  CHG-001 CHG-002 CHG-003 LANG-001 \
+  INST-001 INST-002 INST-003 INST-004; do
   assert_text "$CASE_FILE" "\`$case_id\`" "test case documented: $case_id"
 done
 
@@ -166,6 +243,58 @@ assert_text "$CASE_FILE" "禁止副作用" "test set defines forbidden side effe
 assert_text "$PROJECT_DIR/README.md" "用户指定 → 仓库指令 → 现有文档或元数据 → 当前对话语言" "language priority is documented"
 assert_text "$CASE_FILE" "CHANGELOG、测试计划和说明文字使用中文" "test set covers Chinese business output"
 assert_text "$CASE_FILE" "bash tests/run.sh" "test set documents its runner"
+
+list_output="$("$LIST_SCRIPT")"
+assert_value_contains "$list_output" $'engineering\tcommit\t' "list script discovers commit"
+assert_value_contains "$list_output" $'engineering\tmaintain-test-plan\t' "list script discovers test-plan"
+assert_value_contains "$list_output" $'engineering\trelease\t' "list script discovers release"
+
+dry_parent="$TEST_TEMP_DIR/dry-run"
+dry_destination="$dry_parent/skills"
+mkdir -p "$dry_parent"
+dry_output="$("$LINK_SCRIPT" --dest "$dry_destination" --category engineering --dry-run)"
+assert_absent "$dry_destination" "link dry-run does not create destination"
+assert_value_contains "$dry_output" "dry run complete: 3 link(s) planned" "link dry-run plans all engineering skills"
+
+link_destination="$TEST_TEMP_DIR/linked"
+"$LINK_SCRIPT" --dest "$link_destination" --category engineering >/dev/null
+assert_symlink_to "$link_destination/commit" "$COMMIT_DIR" "link script links commit"
+assert_symlink_to "$link_destination/maintain-test-plan" "$TEST_PLAN_DIR" "link script links test-plan"
+assert_symlink_to "$link_destination/release" "$RELEASE_DIR" "link script links release"
+
+rerun_output="$("$LINK_SCRIPT" --dest "$link_destination" --category engineering)"
+assert_value_contains "$rerun_output" "linking complete: 0 link(s) created" "link script is idempotent"
+
+conflict_destination="$TEST_TEMP_DIR/conflict"
+mkdir -p "$conflict_destination/commit"
+if "$LINK_SCRIPT" --dest "$conflict_destination" --category engineering >/dev/null 2>&1; then
+  fail "link script rejects existing directories by default"
+else
+  pass "link script rejects existing directories by default"
+fi
+if [ -d "$conflict_destination/commit" ] && [ ! -L "$conflict_destination/commit" ]; then
+  pass "link conflict remains untouched"
+else
+  fail "link conflict remains untouched"
+fi
+assert_absent "$conflict_destination/maintain-test-plan" "link conflict prevents partial writes"
+assert_absent "$conflict_destination/release" "link conflict prevents all partial writes"
+
+"$LINK_SCRIPT" --dest "$conflict_destination" --category engineering --force >/dev/null
+assert_symlink_to "$conflict_destination/commit" "$COMMIT_DIR" "link force replaces conflict with symlink"
+backup_count="$(find "$conflict_destination/.skill-backups" -mindepth 1 -maxdepth 1 -type d -name 'commit.*' | wc -l | tr -d ' ')"
+if [ "$backup_count" -eq 1 ]; then
+  pass "link force preserves one conflict backup"
+else
+  fail "link force preserves one conflict backup"
+fi
+
+if "$LINK_SCRIPT" --dest "$PROJECT_DIR/generated-links" --category engineering --dry-run >/dev/null 2>&1; then
+  fail "link script rejects destinations inside source repository"
+else
+  pass "link script rejects destinations inside source repository"
+fi
+assert_absent "$PROJECT_DIR/generated-links" "rejected in-repo destination is not created"
 
 printf '\nSummary: %d passed, %d failed\n' "$PASS_COUNT" "$FAIL_COUNT"
 

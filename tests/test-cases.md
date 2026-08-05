@@ -1,6 +1,8 @@
 # Agent Skills 验收测试集
 
-这份测试集验证 `commit`、`release` 和 `maintain-test-plan` 的可观察行为。每个场景都应在隔离的临时 Git 仓库中执行，记录最终 diff、Git 状态、版本文件、发布文档和外部动作清单。
+这份测试集验证 `commit`、`release` 和 `maintain-test-plan` 的可观察行为。每个场景都应
+在隔离的临时 Git 仓库中执行，记录最终 diff、Git 状态、版本文件、发布文档和外部动作
+清单。
 
 通过条件：产物符合“期望行为”，并且没有执行“禁止副作用”。如果缺少证据，场景应保持未完成或停止，而不是推断成功。
 
@@ -25,13 +27,19 @@
 | `CHG-002` | Changesets prerelease 从普通状态进入候选，再退出候选。 | 按仓库锁定 CLI 的 prerelease 状态机执行 `pre enter`/`pre exit`，随后运行 `version`。 | 不直接编辑 `pre.json` 或手改版本绕过状态机。 |
 | `CHG-003` | Changesets publish、Git tag、GitHub Release 和 CI Action 同时存在。 | 区分 registry publish、tag、push、GitHub Release 与 automation-owned 动作，避免重复执行。 | 不重复创建 tag、发布 package 或触发已有自动化。 |
 | `LANG-001` | 用户使用中文提出发布请求，仓库文档也允许中文。 | release metadata、CHANGELOG、测试计划和说明文字使用中文；命令、ID、package 名和版本号保持原样。 | 不因为命令或技术标识是英文而把整份业务文档输出成英文。 |
+| `INST-001` | 用户在普通终端运行 `npx skills@latest add techidsk/skills`。 | TUI 允许选择 Skill 和目标 Agent，安装副本并记录来源；更新由用户运行 `npx skills update`。 | 不把复制安装描述为后台自动更新。 |
+| `INST-002` | 维护者对 `engineering` 分类运行链接脚本。 | `--dry-run` 不写文件；正式执行前先全量预检，再为每个 Skill 创建指向正式源的 symlink，重复执行保持幂等。 | 不在仓库内创建安装镜像，不复制出第二份正式源，也不在冲突时部分写入。 |
+| `INST-003` | 目标位置已存在普通目录或其他链接。 | 默认停止并保留冲突；仅在 `--force` 时先备份到 `.skill-backups/` 再创建链接。 | 不直接删除或覆盖用户已有目录。 |
+| `INST-004` | Codex 或其他 AI Agent 代为运行 `skills` CLI。 | CLI 自动使用非交互模式；用户可先用 `--list` 检查，再用 `--skill` 限定安装项。 | 不承诺 Agent 内仍显示 TUI，也不在用户已指定 Skill 时扩大范围。 |
 
 ## 运行与证据
 
-静态契约回归测试：
+契约与安装脚本回归测试：
 
 ```bash
 bash tests/run.sh
 ```
 
-该执行器验证 Skill 文档是否仍然包含上述行为契约和测试场景。它不冒充真正的 Agent 黑盒运行；完整黑盒测试需要把每个场景交给装载这些 Skill 的 Agent，并比较生成的 commit、metadata、release plan 和测试文档。
+该执行器验证 Skill 文档、分类目录和安装脚本，并在临时目录中真实执行链接、幂等和
+冲突备份场景。它不冒充真正的 Agent 黑盒运行；完整黑盒测试仍需把业务场景交给装载
+这些 Skill 的 Agent，并比较生成的 commit、metadata、release plan 和测试文档。
