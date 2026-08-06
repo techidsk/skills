@@ -31,6 +31,17 @@ npx skills@latest add techidsk/skills --skill commit
 npx skills update
 ```
 
+按功能分类进行非交互式安装时，可以使用仓库提供的统一入口。例如安装整个
+`engineering` 分类到 Codex 用户目录：
+
+```bash
+./scripts/install-skills.sh --installer npx --category engineering --dry-run
+./scripts/install-skills.sh --installer npx --category engineering
+```
+
+脚本会把分类展开为多个 `--skill` 参数。可用 `--scope project` 改为项目级安装，或用
+`--agent` 指定其他 Agent。
+
 ### GitHub CLI
 
 需要 GitHub CLI `2.90.0` 或更高版本。交互式选择并安装到 Codex 用户目录：
@@ -59,6 +70,16 @@ gh skill install techidsk/skills commit \
 ```bash
 gh skill preview techidsk/skills commit
 ```
+
+GitHub CLI 当前每次只接受一个明确的 Skill；统一入口会依次安装分类内的 Skill：
+
+```bash
+./scripts/install-skills.sh --installer gh --category engineering --dry-run
+./scripts/install-skills.sh --installer gh --category engineering
+```
+
+两个安装器均默认使用 `techidsk/skills`、`codex` 和用户级目录。通过
+`--repository`、`--agent` 和 `--scope` 可以覆盖这些默认值。
 
 ### 维护者开发链接
 

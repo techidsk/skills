@@ -6,6 +6,7 @@ PROJECT_DIR="$(CDPATH= cd -- "$TESTS_DIR/.." && pwd)"
 CASE_FILE="$TESTS_DIR/test-cases.md"
 LIST_SCRIPT="$PROJECT_DIR/scripts/list-skills.sh"
 LINK_SCRIPT="$PROJECT_DIR/scripts/link-skills.sh"
+INSTALL_SCRIPT="$PROJECT_DIR/scripts/install-skills.sh"
 TEST_TEMP_DIR="$(mktemp -d /tmp/agent-skills-tests.XXXXXX)"
 
 cleanup() {
@@ -148,6 +149,7 @@ for required_file in \
   "$TEST_PLAN_DIR/agents/openai.yaml" \
   "$LIST_SCRIPT" \
   "$LINK_SCRIPT" \
+  "$INSTALL_SCRIPT" \
   "$CASE_FILE"; do
   assert_file "$required_file"
 done
@@ -156,6 +158,7 @@ assert_dir "$ENGINEERING_DIR"
 assert_absent "$PROJECT_DIR/skill" "legacy copied skill directory is absent"
 assert_executable "$LIST_SCRIPT"
 assert_executable "$LINK_SCRIPT"
+assert_executable "$INSTALL_SCRIPT"
 assert_executable "$WEBHOOK_INIT"
 assert_executable "$WEBHOOK_SEND"
 
@@ -185,6 +188,8 @@ assert_text "$PROJECT_DIR/README.md" "npx skills update" "root README documents 
 assert_text "$PROJECT_DIR/README.md" "自动切换到非交互模式" "root README documents agent-mode install"
 assert_text "$PROJECT_DIR/README.md" "--skill commit" "root README documents selective install"
 assert_text "$PROJECT_DIR/README.md" "./scripts/link-skills.sh" "root README documents maintainer links"
+assert_text "$PROJECT_DIR/README.md" "./scripts/install-skills.sh --installer npx --category engineering" "root README documents npx category install"
+assert_text "$PROJECT_DIR/README.md" "./scripts/install-skills.sh --installer gh --category engineering" "root README documents gh category install"
 assert_text "$PROJECT_DIR/README.md" "不会 commit、tag、push、publish、deploy 或发送通知" "README prepare safety boundary"
 assert_text "$PROJECT_DIR/README.md" "不使用宽泛暂存" "README commit safety boundary"
 assert_text "$PROJECT_DIR/README.md" "没有证据时，不把测试标记为通过" "README evidence boundary"
@@ -284,7 +289,7 @@ for case_id in \
   REL-010 REL-011 \
   TP-001 TP-002 TP-003 TP-004 TP-005 \
   CHG-001 CHG-002 CHG-003 CHG-004 CHG-005 LANG-001 \
-  INST-001 INST-002 INST-003 INST-004; do
+  INST-001 INST-002 INST-003 INST-004 INST-005 INST-006; do
   assert_text "$CASE_FILE" "\`$case_id\`" "test case documented: $case_id"
 done
 
@@ -299,6 +304,52 @@ list_output="$("$LIST_SCRIPT")"
 assert_value_contains "$list_output" $'engineering\tcommit\t' "list script discovers commit"
 assert_value_contains "$list_output" $'engineering\tmaintain-test-plan\t' "list script discovers test-plan"
 assert_value_contains "$list_output" $'engineering\trelease\t' "list script discovers release"
+
+npx_dry_output="$("$INSTALL_SCRIPT" --installer npx --category engineering --dry-run)"
+assert_value_contains "$npx_dry_output" "--skill commit --skill maintain-test-plan --skill release" "npx category install expands all engineering skills"
+assert_value_contains "$npx_dry_output" "--agent codex --global --yes" "npx category install uses user-scoped Codex defaults"
+assert_value_contains "$npx_dry_output" "dry run complete: 3 skill(s) selected with npx" "npx dry-run does not report installation"
+
+gh_dry_output="$("$INSTALL_SCRIPT" --installer gh --category engineering --scope project --dry-run)"
+assert_value_contains "$gh_dry_output" "gh skill install techidsk/skills commit --agent codex --scope project" "gh category install includes commit"
+assert_value_contains "$gh_dry_output" "gh skill install techidsk/skills maintain-test-plan --agent codex --scope project" "gh category install includes test-plan"
+assert_value_contains "$gh_dry_output" "gh skill install techidsk/skills release --agent codex --scope project" "gh category install includes release"
+
+fake_bin="$TEST_TEMP_DIR/bin"
+install_log="$TEST_TEMP_DIR/install.log"
+mkdir -p "$fake_bin"
+for executable in npx gh; do
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'printf "%s" "$(basename -- "$0")" >> "$INSTALL_LOG"' \
+    'printf "\\t%s" "$@" >> "$INSTALL_LOG"' \
+    'printf "\\n" >> "$INSTALL_LOG"' > "$fake_bin/$executable"
+  chmod +x "$fake_bin/$executable"
+done
+
+: > "$install_log"
+INSTALL_LOG="$install_log" PATH="$fake_bin:$PATH" \
+  "$INSTALL_SCRIPT" --installer npx --category engineering >/dev/null
+npx_call_count="$(wc -l < "$install_log" | tr -d ' ')"
+if [ "$npx_call_count" -eq 1 ]; then
+  pass "npx category install invokes the installer once"
+else
+  fail "npx category install invokes the installer once"
+fi
+assert_text "$install_log" $'npx\t--yes\tskills@latest\tadd\ttechidsk/skills\t--skill\tcommit\t--skill\tmaintain-test-plan\t--skill\trelease\t--agent\tcodex\t--global\t--yes' "npx category install forwards exact arguments"
+
+: > "$install_log"
+INSTALL_LOG="$install_log" PATH="$fake_bin:$PATH" \
+  "$INSTALL_SCRIPT" --installer gh --category engineering >/dev/null
+gh_call_count="$(wc -l < "$install_log" | tr -d ' ')"
+if [ "$gh_call_count" -eq 3 ]; then
+  pass "gh category install invokes the installer for every skill"
+else
+  fail "gh category install invokes the installer for every skill"
+fi
+assert_text "$install_log" $'gh\tskill\tinstall\ttechidsk/skills\tcommit\t--agent\tcodex\t--scope\tuser' "gh category install forwards commit"
+assert_text "$install_log" $'gh\tskill\tinstall\ttechidsk/skills\tmaintain-test-plan\t--agent\tcodex\t--scope\tuser' "gh category install forwards test-plan"
+assert_text "$install_log" $'gh\tskill\tinstall\ttechidsk/skills\trelease\t--agent\tcodex\t--scope\tuser' "gh category install forwards release"
 
 dry_parent="$TEST_TEMP_DIR/dry-run"
 dry_destination="$dry_parent/skills"
