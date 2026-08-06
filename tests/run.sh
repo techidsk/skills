@@ -127,6 +127,9 @@ RELEASE_SKILL="$RELEASE_DIR/SKILL.md"
 RELEASE_EVALS="$RELEASE_DIR/evals/evals.json"
 TEST_PLAN_SKILL="$TEST_PLAN_DIR/SKILL.md"
 CHANGESETS_REF="$RELEASE_DIR/references/changesets.md"
+WEBHOOK_REF="$RELEASE_DIR/references/webhook.md"
+WEBHOOK_INIT="$RELEASE_DIR/scripts/init_webhook.py"
+WEBHOOK_SEND="$RELEASE_DIR/scripts/send_webhook.py"
 
 for required_file in \
   "$PROJECT_DIR/README.md" \
@@ -137,6 +140,9 @@ for required_file in \
   "$RELEASE_EVALS" \
   "$TEST_PLAN_SKILL" \
   "$CHANGESETS_REF" \
+  "$WEBHOOK_REF" \
+  "$WEBHOOK_INIT" \
+  "$WEBHOOK_SEND" \
   "$COMMIT_DIR/agents/openai.yaml" \
   "$RELEASE_DIR/agents/openai.yaml" \
   "$TEST_PLAN_DIR/agents/openai.yaml" \
@@ -150,6 +156,8 @@ assert_dir "$ENGINEERING_DIR"
 assert_absent "$PROJECT_DIR/skill" "legacy copied skill directory is absent"
 assert_executable "$LIST_SCRIPT"
 assert_executable "$LINK_SCRIPT"
+assert_executable "$WEBHOOK_INIT"
+assert_executable "$WEBHOOK_SEND"
 
 assert_text "$COMMIT_SKILL" "name: commit" "commit frontmatter name"
 assert_text "$COMMIT_SKILL" "description:" "commit frontmatter description"
@@ -210,6 +218,10 @@ assert_text "$RELEASE_SKILL" "精确动作" "publish requires exact action list"
 assert_text "$RELEASE_SKILL" "确认发布" "publish has explicit confirmation gate"
 assert_text "$RELEASE_SKILL" "重新核对" "publish rechecks state before execution"
 assert_text "$RELEASE_SKILL" "失败时停止" "publish stops after failure"
+assert_text "$RELEASE_SKILL" "配置 Webhook" "release offers Webhook setup"
+assert_text "$RELEASE_SKILL" "跳过本次通知" "release allows skipping Webhook"
+assert_text "$RELEASE_SKILL" "URL 环境变量名" "release keeps Webhook URL secret"
+assert_text "$RELEASE_SKILL" '`best-effort`' "release defines best-effort Webhook failure"
 assert_order "$RELEASE_SKILL" "在消费任何片段前" "运行仓库原生 version/CHANGELOG 步骤" "release orders plan before version"
 
 assert_text "$TEST_PLAN_SKILL" "完整读取旧文档" "test-plan reads existing document first"
@@ -238,9 +250,38 @@ assert_text "$CHANGESETS_REF" "不要手改状态凑版本" "changesets blocks m
 assert_text "$CHANGESETS_REF" "changeset publish" "changesets separates package publish"
 assert_text "$CHANGESETS_REF" "automation-owned" "changesets marks automation-owned actions"
 
+assert_text "$WEBHOOK_REF" "generic、Slack、Discord、飞书和钉钉" "Webhook providers are documented"
+assert_text "$WEBHOOK_REF" "不得读取、输出或写入" "Webhook URL remains secret"
+assert_text "$WEBHOOK_REF" "不得自动重试" "Webhook retries require authorization"
+
+WEBHOOK_TEMP_REPO="$TEST_TEMP_DIR/webhook-repo"
+mkdir -p "$WEBHOOK_TEMP_REPO"
+git -C "$WEBHOOK_TEMP_REPO" init -q
+python3 "$WEBHOOK_INIT" \
+  --repo "$WEBHOOK_TEMP_REPO" \
+  --provider slack \
+  --failure-policy best-effort \
+  --non-interactive
+assert_file "$WEBHOOK_TEMP_REPO/.release-webhook.json"
+assert_text "$WEBHOOK_TEMP_REPO/.release-webhook.json" '"provider": "slack"' "Webhook init records provider"
+assert_text "$WEBHOOK_TEMP_REPO/.release-webhook.json" '"url_env": "RELEASE_WEBHOOK_URL"' "Webhook init records secret reference"
+if rg -q 'https?://' "$WEBHOOK_TEMP_REPO/.release-webhook.json"; then
+  fail "Webhook init does not store URL"
+else
+  pass "Webhook init does not store URL"
+fi
+WEBHOOK_PAYLOAD="$(python3 "$WEBHOOK_SEND" \
+  --config "$WEBHOOK_TEMP_REPO/.release-webhook.json" \
+  --repository techidsk/example \
+  --version 1.2.3 \
+  --status published \
+  --dry-run 2>/dev/null)"
+assert_value_contains "$WEBHOOK_PAYLOAD" '"text": "Release techidsk/example 1.2.3: published"' "Webhook dry-run renders Slack payload"
+
 for case_id in \
   CMT-001 CMT-002 CMT-003 CMT-004 \
   REL-001 REL-002 REL-003 REL-004 REL-005 REL-006 REL-007 REL-008 REL-009 \
+  REL-010 REL-011 \
   TP-001 TP-002 TP-003 TP-004 TP-005 \
   CHG-001 CHG-002 CHG-003 CHG-004 CHG-005 LANG-001 \
   INST-001 INST-002 INST-003 INST-004; do

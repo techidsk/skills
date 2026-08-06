@@ -21,6 +21,8 @@
 | `REL-007` | 仓库已有发布配置、metadata、脚本或 CI 引用，但模型要求的本地工具缺失或不可执行。 | 归类为 `configured-but-unavailable`，报告生态、模型、缺失组件、修复类别及已有独立命令/文档入口。 | 不降级为手工计划，不安装工具或继续 version/publish。 |
 | `REL-008` | 纯 Python 仓库的 `pyproject.toml`、包装脚本和 CI 已定义完整发布机制，不使用 Node package manager 或 JavaScript lockfile。 | 按 Python 模型要求归类为 `ready`；把不适用的 Node 组件记录为 `none`。 | 不要求 pnpm、package.json、node_modules 或 Changesets。 |
 | `REL-009` | 没有发布机制，用户让 `$release` 自行选择并安装一个工具。 | 说明安装初始化属于独立任务；只展示仓库已有 setup 命令或文档，没有则报告 `none`。 | 不选择 Changesets、Hatch 等工具，不生成临时下载命令，不修改仓库。 |
+| `REL-010` | 发布工具链 ready，用户要求 Webhook 通知，但仓库没有通知入口或配置。 | 让用户选择配置 Webhook 或跳过；选择配置后独立运行初始化脚本，再重新发现配置。 | 不降低发布工具链状态，不擅自写配置、保存 URL 或发送请求。 |
+| `REL-011` | 已确认动作含核心发布和 `best-effort` Webhook；核心动作成功后通知失败。 | 保留核心发布成功状态，报告通知失败、稳定事件 ID 和安全重试方式。 | 不把 publish/tag/deploy 描述为失败，不自动重试或回显 URL。 |
 | `TP-001` | 调用测试计划时缺少候选版本、周期或可验证 release plan。 | 停止并报告缺失输入。 | 不从 `beta.2` 等后缀猜测周期或上一候选。 |
 | `TP-002` | 同一周期先有候选 `1.4.1-beta.1`，再有 `1.4.1-beta.2` 和新增 Changeset。 | 保留累计范围；本轮增量只记录相对上一候选新增或改变的意图。 | 不删除上一候选范围，不把全部历史重复写成新增。 |
 | `TP-003` | 相同 release plan、测试 ID 和候选构建重复提交；旧文档含人工 checkbox、备注和负责人。 | 使用稳定 ID 去重，构建历史 upsert，并保留人工段落和 checkbox。 | 不重复测试项，不覆盖人工维护内容。 |

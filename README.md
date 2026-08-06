@@ -145,6 +145,12 @@ Skill：
 Agent 只执行已经展示且未变化的动作清单，不会重复询问一次 `ok`。如果目标版本、
 registry、tag、remote、environment 或自动化责任发生变化，会展示新清单并重新确认。
 
+如果本次发布需要 Webhook，Agent 会优先使用仓库已有通知入口。未发现配置时会让用户
+选择配置或跳过；选择配置后可用 release Skill 自带的初始化脚本选择 generic、Slack、
+Discord、飞书或钉钉，以及 `best-effort`/`blocking` 失败策略。仓库配置只保存 URL 的
+环境变量名，不保存或显示 secret URL。通知是已确认动作清单中的独立外部动作，默认在
+核心发布成功后发送，失败不会把已经完成的 publish、tag 或 deploy 描述为失败。
+
 ## 跨语言与发布机制
 
 Skills 不要求项目使用 Node 或 pnpm，也不会主动引入发布工具。`$release` 只检查当前
@@ -194,6 +200,8 @@ skills/
 └── engineering/
     ├── commit/
     ├── release/
+    │   ├── scripts/init_webhook.py
+    │   └── scripts/send_webhook.py
     └── maintain-test-plan/
 
 scripts/

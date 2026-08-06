@@ -86,6 +86,32 @@
         "要求先在独立任务中选择发布模型并授权，之后重新运行 release 就绪检查",
         "不修改 manifest、lockfile、配置、版本、CHANGELOG 或 Git refs"
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "使用 $release 发布并发送 Webhook。仓库发布工具链 ready，但没有仓库原生通知入口，也没有 .release-webhook.json。",
+      "expected_output": "发布前让用户选择配置 Webhook 或跳过通知，不擅自创建配置或发送请求。",
+      "files": [],
+      "expectations": [
+        "缺少 Webhook 不改变发布工具链的 ready 状态",
+        "明确提供配置 Webhook 或跳过本次通知两个选择",
+        "只有用户选择配置后才运行独立初始化脚本",
+        "配置不保存或回显 secret URL",
+        "未完成选择前不把 Webhook 加入已确认动作，也不发送外部请求"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "使用 $release 确认发布。已展示的动作清单包含核心 publish、deploy 和 best-effort Slack Webhook；核心动作成功，但 Webhook 返回错误。",
+      "expected_output": "保持核心发布成功的事实，报告 Webhook 失败且不自动重试。",
+      "files": [],
+      "expectations": [
+        "只在核心发布动作成功后发送 Webhook",
+        "动作清单不显示 secret URL，只显示 provider、配置来源、环境变量名和失败策略",
+        "Webhook 失败不把已完成的 publish 或 deploy 描述为失败",
+        "不自动重试 Webhook",
+        "报告稳定事件 ID 和需要新授权的安全重试方式"
+      ]
     }
   ]
 }

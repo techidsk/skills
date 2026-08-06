@@ -1,6 +1,6 @@
 ---
 name: release
-description: "发现并编排仓库原生发布机制，以生态中立方式检查发布工具链就绪状态，汇总 release metadata，准备版本、CHANGELOG 和测试计划，并在明确授权后执行外部发布。Use when the user asks to inspect release readiness, prepare a version, or publish an already reviewed release in any language or ecosystem."
+description: "发现并编排仓库原生发布机制，以生态中立方式检查发布工具链就绪状态，汇总 release metadata，准备版本、CHANGELOG 和测试计划，并在明确授权后执行外部发布与 Webhook 通知。Use when the user asks to inspect release readiness, prepare a version, publish an already reviewed release, configure release Webhooks, or send release notifications in any language or ecosystem."
 ---
 
 # Release
@@ -16,6 +16,8 @@ deploy 和通知分别由本地还是自动化负责。
 
 使用仓库原生工具，不因本 Skill 引入新机制。检测到 Changesets 时读取
 [Changesets 适配器](references/changesets.md)，并使用仓库安装的 CLI。
+需要 Webhook 通知时读取 [Webhook 通知](references/webhook.md)，优先使用仓库原生
+通知入口；没有入口时仅在用户选择配置后使用本 Skill 的初始化与发送脚本。
 
 执行入口可以是仓库包装器、task/script、生态工具、固定版本 CLI 或 CI，也可以对不
 需要命令的发布模型记为 `none`。`pnpm`、`uv`、`poetry`、`cargo`、`bundle exec`、
@@ -52,7 +54,7 @@ package manager 或 CLI 当作所有仓库的通用前提。
 版本工具。若该生态本来就以系统工具为标准入口，则核对仓库或 CI 对其版本的约束，
 不能仅因它不是 Node 风格的本地依赖而判为不可用。
 
-## 安装与初始化交接
+## 发布工具安装与初始化交接
 
 本 Skill 不安装、升级、初始化或配置发布工具，普通 `prepare`、`publish` 以及附带的
 “顺便装一下”都不例外。
@@ -63,6 +65,11 @@ package manager 或 CLI 当作所有仓库的通用前提。
 
 安装或初始化属于单独任务。用户未指定发布模型时，先完成工具选择和授权；外部流程修复
 完成后，再从“发现发布模型”和就绪门禁重新开始。
+
+此边界针对发布工具链。Webhook 是可选的独立外部动作：缺少 Webhook 不降低发布工具
+就绪状态；用户要求通知但没有配置时，必须让用户选择“配置 Webhook”或“跳过本次通知”。
+只有前者授权运行 `scripts/init_webhook.py`，且初始化完成后重新发现配置。URL 只能来自
+环境变量或 secret manager，不得写入配置、日志或动作清单。
 
 ## Prepare
 
@@ -85,9 +92,14 @@ deploy 或通知。
 ## Publish
 
 若尚未展示精确动作，先列出本次实际存在的 release commit、tag、registry publish、
-push refs/触发的 CI、deploy environment、通知，以及发布后测试文档写回的责任方，
+push refs/触发的 CI、deploy environment、Webhook 通知，以及发布后测试文档写回的责任方，
 然后等待“确认发布”。用户对未变化清单说“确认发布”后直接执行，不再要求第二次
 `ok`。
+
+Webhook 清单必须包含 provider、配置来源、URL 环境变量名、触发时机、稳定事件 ID 输入、
+失败策略和执行入口，不显示 secret URL。把通知放在核心发布动作成功之后；通知失败时
+不得把已成功的 registry/tag/deploy 描述为失败，也不得自动重试。`best-effort` 明确报告
+后可结束，`blocking` 保持编排未完成并等待新的重试授权。
 
 执行前重新运行发布工具就绪门禁，并重新核对 `HEAD`、版本、测试门禁、目标与自动化
 ownership；状态不是 `ready` 或任何关键项变化时停止并返回新清单。按顺序执行，每步
