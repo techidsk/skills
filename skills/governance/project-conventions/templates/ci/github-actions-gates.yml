@@ -1,0 +1,49 @@
+# 配置：
+#   - 把本文件的 jobs.gates 合并进项目的 CI 工作流（或放 .github/workflows/ci.yml）。
+#   - 包管理器：下面用 npm；pnpm/yarn 项目替换安装与 run 命令，并同步 scripts/verify.mjs 的 PACKAGE_MANAGER。
+#   - 每个检查一步，脚本名与 package.json 一致；verify-ci-parity.test.mjs 会断言 verify.mjs 覆盖这里每一步。
+#   - 硬闸（typecheck / lint / test）每次 push 都跑；治理棘轮属告警档：脚本默认 exit 0，
+#     CI 里以 ::warning:: 注解呈现，不阻断合并，只在 PR 与手动运行时跑，日常 push 不重复。
+#     升为硬闸只需在对应 run 命令后追加 `-- --strict`。
+name: ci
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # 告警档：ESLint 压制数不得超过基线（只减不增）
+      - name: ESLint suppressions ratchet
+        if: ${{ !cancelled() && github.event_name != 'push' }}
+        run: npm run lint:suppressions
+
+      # 告警档：knip 找出的未被引用文件不得超出基线（只防新增死文件）
+      - name: Unused files ratchet
+        if: ${{ !cancelled() && github.event_name != 'push' }}
+        run: npm run lint:unused-files
+
+      # 告警档：源码目录 README 只允许白名单登记的几类
+      - name: Src README allowlist
+        if: ${{ !cancelled() && github.event_name != 'push' }}
+        run: npm run lint:src-readmes

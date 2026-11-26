@@ -131,6 +131,9 @@ CHANGESETS_REF="$RELEASE_DIR/references/changesets.md"
 WEBHOOK_REF="$RELEASE_DIR/references/webhook.md"
 WEBHOOK_INIT="$RELEASE_DIR/scripts/init_webhook.py"
 WEBHOOK_SEND="$RELEASE_DIR/scripts/send_webhook.py"
+GOVERNANCE_DIR="$PROJECT_DIR/skills/governance"
+CONVENTIONS_DIR="$GOVERNANCE_DIR/project-conventions"
+CONVENTIONS_SKILL="$CONVENTIONS_DIR/SKILL.md"
 
 for required_file in \
   "$PROJECT_DIR/README.md" \
@@ -147,6 +150,13 @@ for required_file in \
   "$COMMIT_DIR/agents/openai.yaml" \
   "$RELEASE_DIR/agents/openai.yaml" \
   "$TEST_PLAN_DIR/agents/openai.yaml" \
+  "$CONVENTIONS_SKILL" \
+  "$CONVENTIONS_DIR/agents/openai.yaml" \
+  "$CONVENTIONS_DIR/reference/coding.md" \
+  "$CONVENTIONS_DIR/reference/architecture.md" \
+  "$CONVENTIONS_DIR/reference/docs.md" \
+  "$CONVENTIONS_DIR/reference/gates.md" \
+  "$CONVENTIONS_DIR/templates/AGENTS.md" \
   "$LIST_SCRIPT" \
   "$LINK_SCRIPT" \
   "$INSTALL_SCRIPT" \
@@ -168,11 +178,14 @@ assert_text "$RELEASE_SKILL" "name: release" "release frontmatter name"
 assert_text "$RELEASE_SKILL" "description:" "release frontmatter description"
 assert_text "$TEST_PLAN_SKILL" "name: maintain-test-plan" "test-plan frontmatter name"
 assert_text "$TEST_PLAN_SKILL" "description:" "test-plan frontmatter description"
+assert_text "$CONVENTIONS_SKILL" "name: project-conventions" "conventions frontmatter name"
+assert_text "$CONVENTIONS_SKILL" "description:" "conventions frontmatter description"
 
 for agent_file in \
   "$COMMIT_DIR/agents/openai.yaml" \
   "$RELEASE_DIR/agents/openai.yaml" \
-  "$TEST_PLAN_DIR/agents/openai.yaml"; do
+  "$TEST_PLAN_DIR/agents/openai.yaml" \
+  "$CONVENTIONS_DIR/agents/openai.yaml"; do
   assert_text "$agent_file" "interface:" "agent metadata interface: ${agent_file#"$PROJECT_DIR/"}"
   assert_text "$agent_file" "display_name:" "agent metadata display name: ${agent_file#"$PROJECT_DIR/"}"
   assert_text "$agent_file" "short_description:" "agent metadata short description: ${agent_file#"$PROJECT_DIR/"}"
@@ -182,6 +195,7 @@ done
 assert_text "$PROJECT_DIR/README.md" "skills/engineering/commit/SKILL.md" "root README links commit"
 assert_text "$PROJECT_DIR/README.md" "skills/engineering/release/SKILL.md" "root README links release"
 assert_text "$PROJECT_DIR/README.md" "skills/engineering/maintain-test-plan/SKILL.md" "root README links test-plan"
+assert_text "$PROJECT_DIR/README.md" "skills/governance/project-conventions/SKILL.md" "root README links project-conventions"
 assert_text "$PROJECT_DIR/README.md" "gh skill install techidsk/skills" "root README documents install"
 assert_text "$PROJECT_DIR/README.md" "npx skills@latest add techidsk/skills" "root README documents TUI install"
 assert_text "$PROJECT_DIR/README.md" "npx skills update" "root README documents manual update"
@@ -308,6 +322,7 @@ list_output="$("$LIST_SCRIPT")"
 assert_value_contains "$list_output" $'engineering\tcommit\t' "list script discovers commit"
 assert_value_contains "$list_output" $'engineering\tmaintain-test-plan\t' "list script discovers test-plan"
 assert_value_contains "$list_output" $'engineering\trelease\t' "list script discovers release"
+assert_value_contains "$list_output" $'governance\tproject-conventions\t' "list script discovers project-conventions"
 
 npx_dry_output="$("$INSTALL_SCRIPT" --installer npx --category engineering --dry-run)"
 assert_value_contains "$npx_dry_output" "--skill commit --skill maintain-test-plan --skill release" "npx category install expands all engineering skills"

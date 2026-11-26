@@ -108,6 +108,7 @@ Skill：
 | [`commit`](skills/engineering/commit/SKILL.md) | 提交当前 Session，并生成发布片段 | “提交一下” |
 | [`release`](skills/engineering/release/SKILL.md) | 检查工具链并准备或执行发布 | “准备发布 1.4.1” |
 | [`maintain-test-plan`](skills/engineering/maintain-test-plan/SKILL.md) | 累计维护版本测试计划 | 通常由 `release` 自动调用 |
+| [`project-conventions`](skills/governance/project-conventions/SKILL.md) | 给 TypeScript 项目落地编码、架构、文档与治理检查规范（存量基线 + 告警档） | “套用通用规范” |
 
 ## 工作流
 

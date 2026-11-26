@@ -13,3 +13,9 @@ Canonical skills are grouped by functional category under `skills/<category>/<na
 The first two skills are the primary human entry points. The release skill calls
 the test-plan skill before the repository's version step consumes pending release
 metadata.
+
+## Governance
+
+| Skill | Responsibility |
+| --- | --- |
+| [`project-conventions`](governance/project-conventions/SKILL.md) | Adopt coding, architecture, docs and baseline-gate conventions in a TypeScript project |

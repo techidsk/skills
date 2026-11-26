@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Conventions"
+  short_description: "给 TypeScript 项目落地编码、架构、文档与治理检查的通用规范"
+  default_prompt: "使用 $project-conventions 为当前项目落地通用工程规范。"
