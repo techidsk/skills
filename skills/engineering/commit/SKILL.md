@@ -31,10 +31,23 @@ fragments 或其他既有机制；仓库没有片段机制时不引入新工具�
 - 发布文本语言：用户指定 → 仓库指令 → 现有元数据 → 当前对话语言。命令、标识符、
   package 名和版本号保持原样。
 
+## Commit message 与署名
+
+按仓库根与受影响子目录的 commit 规范（如 `AGENTS.md`、贡献指南与 hooks）确定语
+言、格式与 trailer；无约定时使用 Conventional Commits。
+
+- 共同作者署名优先级：用户指定 → 仓库规范 → 客户端内置自动署名 → 默认兜底；
+  仓库明确禁止 AI 署名时不添加。
+- 客户端已自动追加署名时不覆盖、不重复；未自动追加且未禁用时，在提交信息末尾空
+  一行附带 `Co-authored-by`（省略正文时与标题空一行）：
+  - Codex：`Co-authored-by: Codex <noreply@openai.com>`
+  - Gemini / Antigravity：`Co-authored-by: Gemini <noreply@google.com>`
+
 ## 执行
 
-1. 读取 commit 规范、hooks、状态和相关 diff，确定 Session 路径、发布意图和片段内容。
-2. 生成符合仓库语言与格式的 commit message；无约定时使用 Conventional Commits。
+1. 读取仓库根与受影响子目录的 commit 规范、hooks、状态和相关 diff，确定 Session
+   路径、发布意图和片段内容。
+2. 按上述规则生成 commit message（含必要的 `Co-authored-by` trailer）。
 3. 执行前简要列出将提交和保留的路径、release metadata 动作及 commit message；
    范围清楚时直接继续。
 4. 写入片段，按精确路径或 hunk 暂存，复核 staged diff，运行快速相关校验后提交。

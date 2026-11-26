@@ -205,6 +205,10 @@ assert_text "$COMMIT_SKILL" "纯测试、文档、CI" "commit handles non-releas
 assert_text "$COMMIT_SKILL" "重复执行时更新" "commit is idempotent for pending metadata"
 assert_text "$COMMIT_SKILL" "不要 push、tag、publish、deploy 或发送外部通知" "commit blocks external actions"
 assert_text "$COMMIT_SKILL" "breaking/major" "commit gates breaking or major changes"
+assert_text "$COMMIT_SKILL" "仓库根与受影响子目录" "commit checks root and subdirectory conventions"
+assert_text "$COMMIT_SKILL" "仓库明确禁止 AI 署名时不添加" "commit respects opt-out for AI co-author"
+assert_text "$COMMIT_SKILL" "Co-authored-by: Codex <noreply@openai.com>" "commit defines Codex co-author fallback"
+assert_text "$COMMIT_SKILL" "Co-authored-by: Gemini <noreply@google.com>" "commit defines Gemini/Antigravity co-author fallback"
 
 assert_text "$RELEASE_SKILL" '默认执行本地 `prepare`' "release defaults to prepare"
 assert_text "$RELEASE_SKILL" '外部 `publish`' "release separates publish"
@@ -284,7 +288,7 @@ WEBHOOK_PAYLOAD="$(python3 "$WEBHOOK_SEND" \
 assert_value_contains "$WEBHOOK_PAYLOAD" '"text": "Release techidsk/example 1.2.3: published"' "Webhook dry-run renders Slack payload"
 
 for case_id in \
-  CMT-001 CMT-002 CMT-003 CMT-004 \
+  CMT-001 CMT-002 CMT-003 CMT-004 CMT-005 \
   REL-001 REL-002 REL-003 REL-004 REL-005 REL-006 REL-007 REL-008 REL-009 \
   REL-010 REL-011 \
   TP-001 TP-002 TP-003 TP-004 TP-005 \

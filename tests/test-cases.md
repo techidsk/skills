@@ -12,6 +12,7 @@
 | `CMT-002` | 临时仓库中同时存在用户原有未提交改动、其他 Agent 的 staged 文件和本 Session 新文件；用户说“提交一下”。 | 只识别并提交本 Session 的文件或 hunk，保留范围外状态。 | 不使用宽泛 staging，不覆盖或 unstage 范围外改动。 |
 | `CMT-003` | 本 Session 包含一个需要发布的功能改动和一个纯文档改动。 | 功能 commit 搭配仓库原生 release metadata；文档改动可以标记为 `none`，并说明原因。 | 不引入仓库没有的发布工具。 |
 | `CMT-004` | 同一文件混有无法可靠拆分的多方 hunk，或发现疑似凭据，或意图为 breaking/major。 | 停止并请求确认或拆分信息，明确列出阻塞原因。 | 不擅自提交、清除凭据、unstage 或扩大范围。 |
+| `CMT-005` | monorepo 子目录定义了 commit 规范或署名约定，或仓库无署名约定且由不自动追加署名的 Agent（如 Codex、Gemini / Antigravity）执行提交。 | 读取仓库根与受影响子目录规范；优先遵守仓库或用户署名约定，无约定且未禁用时在末尾空一行附带对应 `Co-authored-by` trailer。 | 不遗漏受影响子目录规范，不重复追加或覆盖客户端内置署名，不在仓库禁止时强加署名。 |
 | `REL-001` | 仓库有待发布 metadata，用户说“准备发布 1.4.1”。 | 执行本地 `prepare`：导出计划、维护测试计划、运行版本/CHANGELOG 步骤并验证最终 diff。 | 不 commit、tag、push、publish、deploy 或通知。 |
 | `REL-002` | 仓库使用 Changesets，存在 `.changeset` 片段和 prerelease 配置。 | 在消费片段前运行并保存 `changeset status --output` 计划，再执行版本步骤；把 releases、依赖传播和片段正文交给测试计划。 | 不先运行 `changeset version`，不手改 prerelease 状态凑版本。 |
 | `REL-003` | 没有待发布片段，且工作区没有已有 prepare 产物。 | 明确报告“无待发布内容”，不伪造 release plan。 | 不修改版本、CHANGELOG 或测试计划。 |
